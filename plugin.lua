@@ -73,9 +73,9 @@ end
 ---@field text nil|string @ text replacing from this elem's `i` including to the next elem's `i` excluding. When nil no diff will be created. If the last elem has `text` it will treat it as if there was another elem after with with the same `i`
 
 ---creates diffs according to the chain_diff. See ChainDiffElem class description for how it works
----@param chain_diff ChainDiffElem[]
 ---@param diffs Diff[]
-local function add_chain_diff(chain_diff, diffs)
+---@param chain_diff ChainDiffElem[]
+local function add_chain_diff(diffs, chain_diff)
   local prev_chain_diff_elem = chain_diff[1]
   if not prev_chain_diff_elem then return end
   for i = 2, #chain_diff do
@@ -137,12 +137,12 @@ function type_constructors(uri, text, diffs)
     text:gmatch("()new()%s+()([^%s({}),]+)()(%s*)([({]?)")
   do
     if parenth ~= "" or whitespace:find("\n", 1, true) then
-      add_chain_diff({
+      add_chain_diff(diffs, {
         {i = s_new, text = "__new"},
         {i = f_new, text = "."},
         {i = s_name, text = to_identifier(name)},
         {i = f_name},
-      }, diffs)
+      })
       need_global = true
     end
   end
