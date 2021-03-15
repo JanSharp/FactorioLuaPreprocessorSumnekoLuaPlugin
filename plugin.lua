@@ -110,6 +110,15 @@ local function to_identifier(str)
   return str:gsub("[^a-zA-Z0-9_]","_")
 end
 
+---is the given position commented out
+---(only checks one line comments)
+---@param text string
+---@param position number
+---@return boolean
+local function commented(text, position)
+  return not not text:sub(1, position):find("%-%-[^\n]*$")
+end
+
 ---@param uri string @ The uri of file
 ---@param text string @ The content of file
 ---@param diffs Diff[] @ The diffs to add more diffs to
@@ -156,9 +165,11 @@ function delegates(uri, text, diffs)
   in
     text:gmatch("()[a-zA-Z_][a-zA-Z0-9_]*()%s*=>%s*()%b()()")
   do
-    add_diff(diffs, s_param, s_param, "function(")
-    add_diff(diffs, f_param, s_body + 1, ")return\n")
-    add_diff(diffs, f_body - 1, f_body, ";end\n")
+    if not commented(text, s_param) then
+      add_diff(diffs, s_param, s_param, "function(")
+      add_diff(diffs, f_param, s_body + 1, ")return\n")
+      add_diff(diffs, f_body - 1, f_body, ";end\n")
+    end
   end
 
   ---@type number
@@ -166,9 +177,11 @@ function delegates(uri, text, diffs)
   in
     text:gmatch("()[a-zA-Z_][a-zA-Z0-9_]*()%s*=>%s*()%b{}()")
   do
-    add_diff(diffs, s_param, s_param, "function(")
-    add_diff(diffs, f_param, s_body + 1, ")")
-    add_diff(diffs, f_body - 1, f_body, ";end\n")
+    if not commented(text, s_param) then
+      add_diff(diffs, s_param, s_param, "function(")
+      add_diff(diffs, f_param, s_body + 1, ")")
+      add_diff(diffs, f_body - 1, f_body, ";end\n")
+    end
   end
 
   ---@type number
@@ -176,9 +189,11 @@ function delegates(uri, text, diffs)
   in
     text:gmatch("()%([^())]*%)()%s*=>%s*()%b()()")
   do
-    add_diff(diffs, s_param, s_param, "function")
+    if not commented(text, s_param) then
+      add_diff(diffs, s_param, s_param, "function")
       add_diff(diffs, f_param, s_body + 1, "return\n")
       add_diff(diffs, f_body - 1, f_body, ";end\n")
+    end
   end
 
   ---@type number
@@ -186,8 +201,10 @@ function delegates(uri, text, diffs)
   in
     text:gmatch("()%([^())]*%)()%s*=>%s*()%b{}()")
   do
-    add_diff(diffs, s_param, s_param, "function")
+    if not commented(text, s_param) then
+      add_diff(diffs, s_param, s_param, "function")
       add_diff(diffs, f_param, s_body + 1, "")
       add_diff(diffs, f_body - 1, f_body, ";end\n")
+    end
   end
 end
