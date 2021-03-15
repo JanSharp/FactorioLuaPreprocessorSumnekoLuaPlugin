@@ -166,7 +166,7 @@ function delegates(uri, text, diffs)
     text:gmatch("()[a-zA-Z_][a-zA-Z0-9_]*()%s*=>%s*()%b()()")
   do
     if not commented(text, s_param) then
-      add_diff(diffs, s_param, s_param, "function(")
+      add_diff(diffs, s_param, s_param, " function(")
       add_diff(diffs, f_param, s_body + 1, ")return\n")
       add_diff(diffs, f_body - 1, f_body, ";end\n")
     end
@@ -178,7 +178,7 @@ function delegates(uri, text, diffs)
     text:gmatch("()[a-zA-Z_][a-zA-Z0-9_]*()%s*=>%s*()%b{}()")
   do
     if not commented(text, s_param) then
-      add_diff(diffs, s_param, s_param, "function(")
+      add_diff(diffs, s_param, s_param, " function(")
       add_diff(diffs, f_param, s_body + 1, ")")
       add_diff(diffs, f_body - 1, f_body, ";end\n")
     end
@@ -190,7 +190,7 @@ function delegates(uri, text, diffs)
     text:gmatch("()%([^())]*%)()%s*=>%s*()%b()()")
   do
     if not commented(text, s_param) then
-      add_diff(diffs, s_param, s_param, "function")
+      add_diff(diffs, s_param, s_param, " function")
       add_diff(diffs, f_param, s_body + 1, "return\n")
       add_diff(diffs, f_body - 1, f_body, ";end\n")
     end
@@ -202,7 +202,7 @@ function delegates(uri, text, diffs)
     text:gmatch("()%([^())]*%)()%s*=>%s*()%b{}()")
   do
     if not commented(text, s_param) then
-      add_diff(diffs, s_param, s_param, "function")
+      add_diff(diffs, s_param, s_param, " function")
       add_diff(diffs, f_param, s_body + 1, "")
       add_diff(diffs, f_body - 1, f_body, ";end\n")
     end
