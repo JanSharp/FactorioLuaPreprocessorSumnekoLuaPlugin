@@ -29,14 +29,13 @@ if not _G.__lua_preprocessor_plugin_initialized then
   end
 end
 
-local preprocessor = require("preprocessor")
-
 ---@class Diff
 ---@field start  integer # The number of bytes at the beginning of the replacement
 ---@field finish integer # The number of bytes at the end of the replacement
 ---@field text   string  # What to replace
 
 local type_constructors
+local delegates
 
 ---@param  uri  string # The uri of file
 ---@param  text string # The content of file
@@ -47,13 +46,9 @@ function OnSetText(uri, text)
   local diffs = {}
 
   type_constructors(uri, text, diffs)
-  -- if #diffs ~= 0 and diffs then
-  --   return (#diffs).." "..uri
-  -- end
-  return #diffs ~= 0 and diffs
+  delegates(uri, text, diffs)
 
-  -- local result = preprocessor.preprocess_in_memory(text)
-  -- return result ~= text and result
+  return #diffs ~= 0 and diffs
 end
 
 ---@param diffs Diff[]
@@ -149,5 +144,50 @@ function type_constructors(uri, text, diffs)
 
   if need_global then
     add_diff(diffs, 1, 1, "__new={}\n")
+  end
+end
+
+---@param uri string @ The uri of file
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
+function delegates(uri, text, diffs)
+  ---@type number
+  for s_param, f_param, s_body, f_body
+  in
+    text:gmatch("()[a-zA-Z_][a-zA-Z0-9_]*()%s*=>%s*()%b()()")
+  do
+    add_diff(diffs, s_param, s_param, "function(")
+    add_diff(diffs, f_param, s_body + 1, ")return\n")
+    add_diff(diffs, f_body - 1, f_body, ";end\n")
+  end
+
+  ---@type number
+  for s_param, f_param, s_body, f_body
+  in
+    text:gmatch("()[a-zA-Z_][a-zA-Z0-9_]*()%s*=>%s*()%b{}()")
+  do
+    add_diff(diffs, s_param, s_param, "function(")
+    add_diff(diffs, f_param, s_body + 1, ")")
+    add_diff(diffs, f_body - 1, f_body, ";end\n")
+  end
+
+  ---@type number
+  for s_param, f_param, s_body, f_body
+  in
+    text:gmatch("()%([^())]*%)()%s*=>%s*()%b()()")
+  do
+    add_diff(diffs, s_param, s_param, "function")
+      add_diff(diffs, f_param, s_body + 1, "return\n")
+      add_diff(diffs, f_body - 1, f_body, ";end\n")
+  end
+
+  ---@type number
+  for s_param, f_param, s_body, f_body
+  in
+    text:gmatch("()%([^())]*%)()%s*=>%s*()%b{}()")
+  do
+    add_diff(diffs, s_param, s_param, "function")
+      add_diff(diffs, f_param, s_body + 1, "")
+      add_diff(diffs, f_body - 1, f_body, ";end\n")
   end
 end
