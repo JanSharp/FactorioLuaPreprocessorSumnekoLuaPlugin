@@ -36,6 +36,7 @@ end
 
 local type_constructors
 local delegates
+local parse_hash_lines
 
 ---@param  uri  string # The uri of file
 ---@param  text string # The content of file
@@ -47,6 +48,7 @@ function OnSetText(uri, text)
 
   type_constructors(uri, text, diffs)
   delegates(uri, text, diffs)
+  parse_hash_lines(uri, text, diffs)
 
   return #diffs ~= 0 and diffs
 end
@@ -206,5 +208,42 @@ function delegates(uri, text, diffs)
       add_diff(diffs, f_param, s_body + 1, "")
       add_diff(diffs, f_body - 1, f_body, ";end\n")
     end
+  end
+end
+
+-- TODO: use better variable names
+
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
+---@param start number @ The index to start searching at
+---@param finish number @ The index to stop searching at
+local function parse_dollar_paren(diffs, text, start, finish)
+  local chunk = text:sub(start, finish)
+  local offset = start - 1
+  ---@type string|number
+  for s_term, f_term in chunk:gmatch("()$%b()()") do
+    add_diff(diffs, offset + s_term, offset + s_term + 2, "")
+    add_diff(diffs, offset + f_term - 1, offset + f_term, "")
+  end
+end
+
+---@param uri string @ The uri of file
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
+function parse_hash_lines(uri, text, diffs)
+  local s = 1
+  while true do
+    ---@type string|number
+    local ss, e = string.find(text, "^#+[^\n]*\n?", s)
+    if e then
+      add_diff(diffs, s, s + 1, "")
+    else
+      ---@type string|number
+      ss, e = string.find(text, "\n#+[^\n]*\n?", s)
+      parse_dollar_paren(diffs, text, s, ss)
+      if not e then break end
+      add_diff(diffs, ss + 1, ss + 2, "")
+    end
+    s = e + 1
   end
 end
