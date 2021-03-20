@@ -37,6 +37,7 @@ end
 local type_constructors
 local delegates
 local parse_hash_lines
+local pragma_once
 
 ---@param  uri  string # The uri of file
 ---@param  text string # The content of file
@@ -49,6 +50,7 @@ function OnSetText(uri, text)
   type_constructors(uri, text, diffs)
   delegates(uri, text, diffs)
   parse_hash_lines(uri, text, diffs)
+  pragma_once(uri, text, diffs)
 
   return #diffs ~= 0 and diffs
 end
@@ -119,6 +121,21 @@ end
 ---@return boolean
 local function commented(text, position)
   return not not text:sub(1, position):find("%-%-[^\n]*$")
+end
+
+---@param uri string @ The uri of file
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
+function pragma_once(uri, text, diffs)
+  ---@type string|number
+  local s, f = text:match("()#pragma once%s*()return")
+  if s then
+    for _, diff in ipairs(diffs) do
+      if diff.start == s then
+        diff.finish = f - 1
+      end
+    end
+  end
 end
 
 ---@param uri string @ The uri of file
