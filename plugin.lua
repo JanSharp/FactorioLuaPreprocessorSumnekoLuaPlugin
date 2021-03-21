@@ -128,7 +128,7 @@ end
 ---@param diffs Diff[] @ The diffs to add more diffs to
 function pragma_once(uri, text, diffs)
   ---@type string|number
-  local s, f = text:match("()#pragma once%s*()return")
+  local s, f = text:match("()#pragma once()")
   if s then
     for _, diff in ipairs(diffs) do
       if diff.start == s then
