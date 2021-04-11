@@ -143,14 +143,12 @@ end
 ---@param diffs Diff[] @ The diffs to add more diffs to
 function type_constructors(uri, text, diffs)
   local need_global = false
+  local classes = {}
 
   ---@type string|number
-  for s, name
-  in
-    text:gmatch("()%-%-%-@class%s*([^%s]+)")
-  do
+  for name in text:gmatch("%-%-%-@class%s*([^%s]+)") do
     local id = to_identifier(name)
-    add_diff(diffs, s, s, "\n---@param _ "..name.."\n---@return "..name.."\nfunction __new."..id.."(_) end\n")
+    classes[#classes+1] = "---@param _ "..name.."\n---@return "..name.."\nfunction __new."..id.."(_) end\n"
     need_global = true
   end
 
@@ -171,7 +169,7 @@ function type_constructors(uri, text, diffs)
   end
 
   if need_global then
-    add_diff(diffs, 1, 1, "__new={}\n")
+    add_diff(diffs, 1, 1, "__new={}\n"..table.concat(classes))
   end
 end
 
