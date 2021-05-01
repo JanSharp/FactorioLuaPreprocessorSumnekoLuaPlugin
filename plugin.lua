@@ -34,6 +34,7 @@ end
 ---@field finish integer # The number of bytes at the end of the replacement
 ---@field text   string  # What to replace
 
+local ignored_by_language_server
 local type_constructors
 local delegates
 local parse_hash_lines
@@ -47,6 +48,7 @@ function OnSetText(uri, text)
 
   local diffs = {}
 
+  ignored_by_language_server(uri, text, diffs)
   type_constructors(uri, text, diffs)
   delegates(uri, text, diffs)
   parse_hash_lines(uri, text, diffs)
@@ -121,6 +123,17 @@ end
 ---@return boolean
 local function commented(text, position)
   return not not text:sub(1, position):find("%-%-[^\n]*$")
+end
+
+---@param uri string @ The uri of file
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
+function ignored_by_language_server(uri, text, diffs)
+  ---@type string|number
+  local s, f = text:match("()%$%?%b()()")
+  if s then
+    add_diff(diffs, s, f, "")
+  end
 end
 
 ---@param uri string @ The uri of file
