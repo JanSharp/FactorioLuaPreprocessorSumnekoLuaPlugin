@@ -35,6 +35,7 @@ end
 ---@field text   string  # What to replace
 
 local ignored_by_language_server
+local ignored_by_preprocessor
 local type_constructors
 local delegates
 local parse_hash_lines
@@ -49,6 +50,7 @@ function OnSetText(uri, text)
   local diffs = {}
 
   ignored_by_language_server(uri, text, diffs)
+  ignored_by_preprocessor(uri, text, diffs)
   type_constructors(uri, text, diffs)
   delegates(uri, text, diffs)
   parse_hash_lines(uri, text, diffs)
@@ -130,8 +132,19 @@ end
 ---@param diffs Diff[] @ The diffs to add more diffs to
 function ignored_by_language_server(uri, text, diffs)
   ---@type string|number
-  for s, f in text:gmatch("()%$%?%b()()") do
+  for s, f in text:gmatch("()%$p%b()()") do
     add_diff(diffs, s, f, "")
+  end
+end
+
+---@param uri string @ The uri of file
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
+function ignored_by_preprocessor(uri, text, diffs)
+  ---@type string|number
+  for s, f in text:gmatch("()%$l%b()()") do
+    add_diff(diffs, s, s + 3, "")
+    add_diff(diffs, f - 1, f, "")
   end
 end
 
