@@ -130,8 +130,7 @@ end
 ---@param diffs Diff[] @ The diffs to add more diffs to
 function ignored_by_language_server(uri, text, diffs)
   ---@type string|number
-  local s, f = text:match("()%$%?%b()()")
-  if s then
+  for s, f in text:gmatch("()%$%?%b()()") do
     add_diff(diffs, s, f, "")
   end
 end
