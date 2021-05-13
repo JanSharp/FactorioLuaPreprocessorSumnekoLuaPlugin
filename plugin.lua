@@ -274,15 +274,15 @@ function parse_hash_lines(uri, text, diffs)
   local s = 1
   while true do
     ---@type string|number
-    local ss, e = string.find(text, "^#+[^\n]*\n?", s)
+    local ss, e, hashes, eol = string.find(text, "^(#+)[^\n]*()\n?", s)
     if e then
-      add_diff(diffs, s, s + 1, "")
+      add_diff(diffs, s, (#hashes > 1) and eol or s + 1, "")
     else
       ---@type string|number
-      ss, e = string.find(text, "\n#+[^\n]*\n?", s)
+      ss, e, hashes, eol = string.find(text, "\n(#+)[^\n]*()\n?", s)
       parse_dollar_paren(diffs, text, s, ss)
       if not e then break end
-      add_diff(diffs, ss + 1, ss + 2, "")
+      add_diff(diffs, ss + 1, (#hashes > 1) and eol or ss + 2, "")
     end
     s = e + 1
   end
