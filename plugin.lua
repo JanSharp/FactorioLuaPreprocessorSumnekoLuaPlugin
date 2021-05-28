@@ -34,6 +34,7 @@ end
 ---@field finish integer # The number of bytes at the end of the replacement
 ---@field text   string  # What to replace
 
+local identifier_as_string
 local ignored_by_language_server
 local ignored_by_preprocessor
 local type_constructors
@@ -49,6 +50,7 @@ function OnSetText(uri, text)
 
   local diffs = {}
 
+  identifier_as_string(uri, text, diffs)
   ignored_by_language_server(uri, text, diffs)
   ignored_by_preprocessor(uri, text, diffs)
   type_constructors(uri, text, diffs)
@@ -125,6 +127,16 @@ end
 ---@return boolean
 local function commented(text, position)
   return not not text:sub(1, position):find("%-%-[^\n]*$")
+end
+
+---@param uri string @ The uri of file
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
+function identifier_as_string(uri, text, diffs)
+  ---@type string|number
+  for s, f in text:gmatch("()$()[a-zA-Z_][a-zA-Z0-9_]*") do
+    add_diff(diffs, s, f, "")
+  end
 end
 
 ---@param uri string @ The uri of file
