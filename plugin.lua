@@ -34,6 +34,7 @@ end
 ---@field finish integer # The number of bytes at the end of the replacement
 ---@field text   string  # What to replace
 
+local expression_as_string
 local identifier_as_string
 local ignored_by_language_server
 local ignored_by_preprocessor
@@ -50,6 +51,7 @@ function OnSetText(uri, text)
 
   local diffs = {}
 
+  expression_as_string(uri, text, diffs)
   identifier_as_string(uri, text, diffs)
   ignored_by_language_server(uri, text, diffs)
   ignored_by_preprocessor(uri, text, diffs)
@@ -132,10 +134,23 @@ end
 ---@param uri string @ The uri of file
 ---@param text string @ The content of file
 ---@param diffs Diff[] @ The diffs to add more diffs to
+function expression_as_string(uri, text, diffs)
+  ---@type string|number
+  for s, f in text:gmatch("()%$e%b()()") do
+    add_diff(diffs, s, s + 3, "")
+    add_diff(diffs, f - 1, f, "")
+  end
+end
+
+---@param uri string @ The uri of file
+---@param text string @ The content of file
+---@param diffs Diff[] @ The diffs to add more diffs to
 function identifier_as_string(uri, text, diffs)
   ---@type string|number
   for s, f in text:gmatch("()$()[a-zA-Z_][a-zA-Z0-9_]*") do
-    add_diff(diffs, s, f, "")
+    if not text:match("^[epl]%(", f) then
+      add_diff(diffs, s, f, "")
+    end
   end
 end
 
